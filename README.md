@@ -28,20 +28,6 @@
 
 ---
 
-## 🎨 Design & Palette
-
-Our application features a modern, soft, and accessible color palette designed for comfort and clarity.
-
-| Color | Name | Hex | Usage |
-|:--:|:--|:--|:--|
-| <div style="background-color: #ed6a5a; width: 50px; height: 50px; border-radius: 50%;"></div> | **Vibrant Coral** | `#ed6a5a` | Accents & Alerts |
-| <div style="background-color: #f4f1bb; width: 50px; height: 50px; border-radius: 50%;"></div> | **Lemon Chiffon** | `#f4f1bb` | Highlights |
-| <div style="background-color: #9bc1bc; width: 50px; height: 50px; border-radius: 50%;"></div> | **Ash Grey** | `#9bc1bc` | Borders & Secondary Elements |
-| <div style="background-color: #5d576b; width: 50px; height: 50px; border-radius: 50%;"></div> | **Taupe Grey** | `#5d576b` | Primary Text & UI |
-| <div style="background-color: #e6ebe0; width: 50px; height: 50px; border-radius: 50%;"></div> | **Soft Linen** | `#e6ebe0` | Backgrounds |
-
----
-
 ## ✨ Features
 
 - **👁️ Automatic Window Detection**: Uses accessibility APIs to detect the currently active window.
