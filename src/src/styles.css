@@ -2,19 +2,38 @@
   filter: drop-shadow(0 0 2em #ffe21c);
 }
 :root {
+  --vibrant-coral: #ed6a5aff;
+  --lemon-chiffon: #f4f1bbff;
+  --ash-grey: #9bc1bcff;
+  --taupe-grey: #5d576bff;
+  --soft-linen: #e6ebe0ff;
+
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
 
-  color: #0f0f0f;
-  background-color: #f6f6f6;
+  color: var(--taupe-grey);
+  background-color: var(--soft-linen);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+html, body {
+    height: 100vh;
+    width: 100vw;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--soft-linen);
+  color: var(--taupe-grey);
 }
 
 .container {
@@ -24,6 +43,83 @@
   flex-direction: column;
   justify-content: center;
   text-align: center;
+}
+
+/* Settings Page Overrides */
+.settings-page .container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: block; /* Override flex from generic .container */
+}
+
+.settings-page {
+    display: block; /* Override flex center from generic body */
+    padding: 20px;
+}
+
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.settings-logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+}
+
+.pattern-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.pattern-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.settings-page input[type="text"] {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid var(--ash-grey);
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--taupe-grey);
+    background-color: white !important; /* Override global input bg */
+}
+
+.settings-page input[type="text"]:focus {
+    outline: none;
+    border-color: var(--taupe-grey);
+    box-shadow: 0 0 0 2px var(--lemon-chiffon);
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    border-top: 1px solid var(--ash-grey);
+    padding-top: 20px;
+}
+
+.description {
+    margin-bottom: 20px;
+    color: var(--taupe-grey);
+    font-size: 0.95em;
+    line-height: 1.5;
+    text-align: center;
+    opacity: 0.8;
 }
 
 .logo {
@@ -54,6 +150,7 @@ a:hover {
 
 h1 {
   text-align: center;
+  color: var(--taupe-grey);
 }
 
 input,
@@ -70,13 +167,30 @@ button {
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
 }
 
+input {
+    background-color: #e6ebe0ff !important;
+}
+
 button {
   cursor: pointer;
+  background-color: var(--taupe-grey);
+  color: white;
 }
 
 button:hover {
-  border-color: #396cd8;
+  opacity: 0.9;
 }
+
+button.remove {
+    background-color: var(--vibrant-coral);
+    padding: 10px 15px;
+}
+
+button.remove:hover {
+    opacity: 0.9;
+    background-color: var(--vibrant-coral);
+}
+
 button:active {
   border-color: #396cd8;
   background-color: #e8e8e8;
