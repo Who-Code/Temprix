@@ -105,6 +105,7 @@ impl ActivityTracker {
 
         match window_result {
             Ok(window) => {
+                println!("Active Window: {:?}",window);
                 let app_name = window.app_name;
                 let title = window.title;
                 
