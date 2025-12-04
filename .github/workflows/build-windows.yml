@@ -1,0 +1,46 @@
+name: Windows Build
+
+on:
+  push:
+    branches: [ "master", "feature/*" ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ./src
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          cache-dependency-path: src/package-lock.json
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fix Icon for Windows
+        run: |
+          magick convert src-tauri/icons/icon.png -define icon:auto-resize=256,128,64,48,32,16 src-tauri/icons/icon.ico
+
+      - name: Build the app
+        run: npm run tauri build
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Temprix-Windows-Installer
+          path: |
+            src/src-tauri/target/release/bundle/nsis/*.exe
+            src/src-tauri/target/release/bundle/msi/*.msi
+          if-no-files-found: warn

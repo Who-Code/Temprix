@@ -81,7 +81,7 @@ pub fn run() {
                                     tauri::WebviewUrl::App("settings.html".into()),
                                 )
                                 .title("Activity Tracker Settings")
-                                .inner_size(650.0, 700.0)
+                                .inner_size(650.0, 400.0)
                                 .build();
                             }
                         }
