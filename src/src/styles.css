@@ -1,6 +1,3 @@
-.logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #ffe21c);
-}
 :root {
   --vibrant-coral: #ed6a5aff;
   --lemon-chiffon: #f4f1bbff;
@@ -26,6 +23,7 @@
 html, body {
     height: 100vh;
     width: 100vw;
+    overflow: hidden;
 }
 
 body {
@@ -34,6 +32,10 @@ body {
   justify-content: center;
   background-color: var(--soft-linen);
   color: var(--taupe-grey);
+}
+
+.logo.vanilla:hover {
+  filter: drop-shadow(0 0 2em #ffe21c);
 }
 
 .container {
@@ -53,13 +55,8 @@ body {
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    display: block; /* Override flex from generic .container */
 }
 
-.settings-page {
-    display: block; /* Override flex center from generic body */
-    padding: 20px;
-}
 
 .header-container {
     display: flex;

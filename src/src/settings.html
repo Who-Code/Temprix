@@ -10,83 +10,38 @@
     <div class="container">
         <div class="header-container">
             <img src="assets/logo.png" alt="Temprix Logo" class="settings-logo">
-            <h1>Settings</h1>
+            <h1>Temprix</h1>
         </div>
-        <div class="description">
-            Configure Regex patterns to identify ticket IDs from window titles.<br>
-            Use standard Regex syntax. Capture group 1 will be used as the ID.
-        </div>
+        <div class="settings-section">
+            <h2>ID Detection Patterns</h2>
+            <div class="description">
+                Configure Regex patterns to identify ticket IDs from window titles.<br>
+                Use standard Regex syntax. Capture group 1 will be used as the ID.
+            </div>
 
-        <div id="pattern-list" class="pattern-list">
-            <!-- Patterns will be loaded here -->
-        </div>
+            <div id="pattern-list" class="pattern-list">
+                <!-- Patterns will be loaded here -->
+            </div>
 
-        <div class="actions">
-            <button id="add-pattern">Add Pattern</button>
-            <button id="save-patterns">Save Changes</button>
+            <div class="actions">
+                <button id="add-pattern">Add Pattern</button>
+                <button id="save-patterns">Save Changes</button>
+            </div>
+        </div>
+        <div class="settings-section">
+            <h2>Activity log folder</h2>
+            <div class="description">
+                Define the directory where you wan't the activity logs to be stored.
+            </div>
+            <div id="activity-log-folder" class="activity-log-folder">
+                
+            </div>
+            <div class="actions">
+                <button id="open-folder">Open Folder</button>
+            </div>
         </div>
     </div>
 
-    <script>
-        const { invoke } = window.__TAURI__.core;
-
-        const patternListEl = document.getElementById('pattern-list');
-        const addBtn = document.getElementById('add-pattern');
-        const saveBtn = document.getElementById('save-patterns');
-
-        function createPatternItem(value = '') {
-            const div = document.createElement('div');
-            div.className = 'pattern-item';
-            
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = value;
-            input.placeholder = 'e.g. #(\\d+)';
-            
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'remove';
-            removeBtn.textContent = 'Remove';
-            removeBtn.onclick = () => div.remove();
-            
-            div.appendChild(input);
-            div.appendChild(removeBtn);
-            return div;
-        }
-
-        async function loadPatterns() {
-            try {
-                const patterns = await invoke('get_patterns');
-                patternListEl.innerHTML = '';
-                patterns.forEach(p => {
-                    patternListEl.appendChild(createPatternItem(p));
-                });
-            } catch (e) {
-                console.error('Failed to load patterns', e);
-                alert('Failed to load patterns: ' + e);
-            }
-        }
-
-        async function savePatterns() {
-            const inputs = patternListEl.querySelectorAll('input');
-            const patterns = Array.from(inputs).map(input => input.value).filter(v => v.trim() !== '');
-            
-            try {
-                await invoke('update_patterns', { patterns });
-                alert('Settings saved successfully!');
-            } catch (e) {
-                console.error('Failed to save patterns', e);
-                alert('Failed to save settings: ' + e);
-            }
-        }
-
-        addBtn.onclick = () => {
-            patternListEl.appendChild(createPatternItem());
-        };
-
-        saveBtn.onclick = savePatterns;
-
-        // Initial load
-        loadPatterns();
-    </script>
+    <script src="settings.js" />
   </body>
 </html>
