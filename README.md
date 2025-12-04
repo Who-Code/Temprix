@@ -4,7 +4,7 @@
   <h1>Temprix</h1>
 
   <p>
-    <strong>Automatic Window Title & Ticket Tracking for macOS</strong>
+    <strong>Automatic Window Title & Ticket Tracking for macOS & Windows</strong>
   </p>
 
   <p>
@@ -18,6 +18,7 @@
     <img src="https://img.shields.io/badge/Rust-%23ed6a5a?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
     <img src="https://img.shields.io/badge/Tauri-%235d576b?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri" />
     <img src="https://img.shields.io/badge/macOS-%239bc1bc?style=for-the-badge&logo=apple&logoColor=white" alt="macOS" />
+    <img src="https://img.shields.io/badge/Windows-%230078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows" />
     <img src="https://img.shields.io/badge/Node.js-%23e6ebe0?style=for-the-badge&logo=nodedotjs&logoColor=5d576b" alt="Node.js" />
   </p>
 </div>
@@ -35,14 +36,16 @@
 - **🔒 Local & Private**: Securely logs activity to JSON files in `~/Documents/ActivityLogs/`. Data never leaves your machine.
 - **🖥️ System Tray Integration**: Unobtrusive menu bar app that stays out of your way.
 - **⚙️ Configurable**: Customize regex patterns to match your organization's ticket format.
+- **🪟 Cross-Platform**: Works seamlessly on both macOS and Windows.
 
 ---
 
 ## 🛠️ Prerequisites
 
-- **macOS**: Designed specifically for the macOS ecosystem.
+- **OS**: macOS or Windows.
 - **Node.js** & **npm**: Required for the frontend build process.
 - **Rust**: Required for the high-performance backend.
+- **Visual Studio C++ Build Tools** (Windows only): Required for compiling Rust on Windows.
 
 ---
 
