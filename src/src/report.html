@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Temprix Tracker: Today's Report</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="report-page">
+    <div class="container">
+      <div class="report-header">
+        <div>
+          <h1>Today's Activity Overview</h1>
+          <p id="report-date" class="report-subtitle">Loading current day…</p>
+        </div>
+        <div class="calendar-legend">
+          <span class="legend-item legend-issue">Ticket Work</span>
+          <span class="legend-item legend-general">General Activity</span>
+        </div>
+      </div>
+
+      <div id="empty-state" class="empty-state hidden">
+        <img src="assets/logo.png" alt="Temprix" />
+        <h2>No activity tracked yet</h2>
+        <p>Once you start working, entries will appear here automatically.</p>
+      </div>
+
+      <div id="calendar" class="calendar-wrapper hidden">
+        <div id="time-column" class="time-column"></div>
+        <div class="events-column">
+          <div id="calendar-background" class="calendar-background"></div>
+          <div id="events-layer" class="events-layer"></div>
+        </div>
+      </div>
+
+      <div id="activity-list" class="activity-list hidden">
+        <h2>Tracked Sessions</h2>
+        <div id="activity-cards" class="activity-cards"></div>
+      </div>
+    </div>
+
+    <script src="report.js"></script>
+  </body>
+</html>

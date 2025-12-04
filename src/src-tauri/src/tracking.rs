@@ -98,6 +98,23 @@ impl ActivityTracker {
         self.config.lock().unwrap().ticket_patterns.clone()
     }
 
+    pub fn get_todays_activities(&self) -> Vec<ActivityItem> {
+        let storage_dir = {
+            let config = self.config.lock().unwrap();
+            config.storage_dir.clone()
+        };
+
+        let date_str = Local::now().format("%Y-%m-%d").to_string();
+        let file_name = format!("activity_{}.json", date_str);
+        let file_path = storage_dir.join(file_name);
+
+        if let Ok(content) = fs::read_to_string(file_path) {
+            serde_json::from_str::<Vec<ActivityItem>>(&content).unwrap_or_default()
+        } else {
+            Vec::new()
+        }
+    }
+
     pub fn check_activity(&self) {
         let window_result = get_active_window();
         
@@ -216,6 +233,7 @@ impl ActivityTracker {
         
         true
     }
+
     
     fn append_to_file(&self, item: ActivityItem) {
         let config = self.config.lock().unwrap();

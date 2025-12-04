@@ -1,6 +1,6 @@
 mod tracking;
 
-use tracking::ActivityTracker;
+use tracking::{ActivityTracker, ActivityItem};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
@@ -20,6 +20,12 @@ fn update_patterns(tracker: State<Arc<ActivityTracker>>, patterns: Vec<String>) 
     tracker.update_patterns(patterns);
 }
 
+#[tauri::command]
+fn get_todays_activities(tracker: State<Arc<ActivityTracker>>) -> Vec<ActivityItem> {
+    tracker.get_todays_activities()
+}
+
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let tracker = ActivityTracker::new();
@@ -37,7 +43,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(tracker_arc.clone()) // Manage state so commands can access it
-        .invoke_handler(tauri::generate_handler![get_patterns, update_patterns])
+        .invoke_handler(tauri::generate_handler![get_patterns, update_patterns, get_todays_activities])
         .setup(move |app| {
             // Hide main window if it exists
             if let Some(window) = app.get_webview_window("main") {
@@ -47,9 +53,10 @@ pub fn run() {
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let show_dir_i = MenuItem::with_id(app, "open_dir", "Open Activity Folder", true, None::<&str>)?;
             let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
+            let report_i = MenuItem::with_id(app, "report", "Today\'s Report", true, None::<&str>)?;
             let status_i = MenuItem::with_id(app, "status", "Status: Initializing...", false, None::<&str>)?;
             
-            let menu = Menu::with_items(app, &[&status_i, &show_dir_i, &settings_i, &quit_i])?;
+            let menu = Menu::with_items(app, &[&status_i, &show_dir_i, &report_i, &settings_i, &quit_i])?;
 
             let tracker_for_menu = tracker_arc.clone();
 
@@ -82,6 +89,22 @@ pub fn run() {
                                 )
                                 .title("Activity Tracker Settings")
                                 .inner_size(650.0, 400.0)
+                                .build();
+                            }
+                        }
+                        "report" => {
+                            if let Some(window) = app.get_webview_window("report") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            } else {
+                                let _ = tauri::WebviewWindowBuilder::new(
+                                    app,
+                                    "report",
+                                    tauri::WebviewUrl::App("report.html".into()),
+                                )
+                                .title("Today's Activity Report")
+                                .inner_size(900.0, 640.0)
+                                .min_inner_size(700.0, 480.0)
                                 .build();
                             }
                         }
