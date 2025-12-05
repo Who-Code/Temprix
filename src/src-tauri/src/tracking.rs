@@ -99,13 +99,13 @@ impl ActivityTracker {
         self.config.lock().unwrap().ticket_patterns.clone()
     }
 
-    pub fn get_todays_activities(&self) -> Vec<ActivityItem> {
+    pub fn get_days_activities(&self, date_str: String) -> Vec<ActivityItem> {
         let storage_dir = {
             let config = self.config.lock().unwrap();
             config.storage_dir.clone()
         };
 
-        let date_str = Local::now().format("%Y-%m-%d").to_string();
+        // let date_str = Local::now().format("%Y-%m-%d").to_string();
         let file_name = format!("activity_{}.json", date_str);
         let file_path = storage_dir.join(file_name);
 

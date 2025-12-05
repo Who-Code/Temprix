@@ -17,12 +17,14 @@ fn get_patterns(tracker: State<Arc<ActivityTracker>>) -> Vec<String> {
 
 #[tauri::command]
 fn update_patterns(tracker: State<Arc<ActivityTracker>>, patterns: Vec<String>) {
-    tracker.update_patterns(patterns);
+    tracker.update_patterns(patterns)
 }
 
 #[tauri::command]
-fn get_todays_activities(tracker: State<Arc<ActivityTracker>>) -> Vec<ActivityItem> {
-    tracker.get_todays_activities()
+fn get_days_activities(tracker: State<Arc<ActivityTracker>>, date_input: String) -> Vec<ActivityItem> {
+    println!("Get Days Activities got called");
+    println!("{}", date_input);
+    tracker.get_days_activities(date_input)
 }
 
 
@@ -43,7 +45,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(tracker_arc.clone()) // Manage state so commands can access it
-        .invoke_handler(tauri::generate_handler![get_patterns, update_patterns, get_todays_activities])
+        .invoke_handler(tauri::generate_handler![get_patterns, update_patterns, get_days_activities])
         .setup(move |app| {
             // Hide main window if it exists
             if let Some(window) = app.get_webview_window("main") {
