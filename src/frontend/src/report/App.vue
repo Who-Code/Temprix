@@ -128,9 +128,10 @@ const fetchActivities = async () => {
       if (!span) {
         return;
       }
+      const nameLayout = meta.application_name + ' ' + meta.application_window_title;
       mapped.push({
-        title: meta.application_name || 'Unknown Activity',
-        details: meta.application_window_title,
+        name: nameLayout,
+        category: meta.application_window_title,
         start: span.start,
         end: span.end,
         color: activity.related_issue_id ? '#ED6A5A' : '#7DA59E',
@@ -218,10 +219,12 @@ onMounted(async () => {
                 :first-interval="0"
                 :interval-minutes="INTERVAL_MINUTES"
                 :interval-height="INTERVAL_HEIGHT"
+                event-overlap-mode="column"
                 color="primary"
               >
                 <template #event-tooltip="{ event, interval }">
                   <div class="py-2 px-3">
+                    <pre>{{event}}</pre>
                     <strong>{{ event.title }}</strong>
                     <div>{{ formatTooltip(interval) }}</div>
                   </div>
