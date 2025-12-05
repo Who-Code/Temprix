@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
-import { invoke } from '@tauri-apps/api/core';
-import type { CalendarEvent, CalendarEventInterval } from 'vuetify/components';
+import { computed, ref, onMounted } from "vue";
+import { invoke } from "@tauri-apps/api/core";
+import type { CalendarEvent, CalendarEventInterval } from "vuetify/components";
 
 interface ActivityItem {
   from: string;
@@ -24,19 +24,70 @@ interface EventMeta extends ActivityItem {
 }
 
 const INTERVAL_MINUTES = 15;
-const INTERVAL_HEIGHT = 60;
-const DAY_INTERVAL_COUNT = (24 * 60) / INTERVAL_MINUTES;
+const INTERVAL_HEIGHT = 200;
+const FIRST_HOUR = 7;
+const LAST_HOUR = 19;
+const WORK_HOURS = LAST_HOUR - FIRST_HOUR;
+const DAY_INTERVAL_COUNT = (WORK_HOURS * 60) / INTERVAL_MINUTES;
 
 const events = ref<CalendarEvent[]>([]);
 const loading = ref(true);
 const selectedDate = ref(new Date());
 const errorMessage = ref<string | null>(null);
+const showDatePicker = ref(false);
+
+const maxDate = computed(() => {
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  return today;
+});
+
+const datePickerValue = computed({
+  get: () => selectedDate.value.toISOString().split("T")[0],
+  set: (value: string) => {
+    const newDate = new Date(value);
+    if (newDate <= maxDate.value) {
+      selectedDate.value = newDate;
+      fetchActivities();
+    }
+    showDatePicker.value = false;
+  },
+});
+
+const canGoForward = computed(() => {
+  const tomorrow = new Date(selectedDate.value);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return tomorrow <= today;
+});
+
+const goToPreviousDay = () => {
+  const newDate = new Date(selectedDate.value);
+  newDate.setDate(newDate.getDate() - 1);
+  selectedDate.value = newDate;
+  fetchActivities();
+};
+
+const goToNextDay = () => {
+  if (canGoForward.value) {
+    const newDate = new Date(selectedDate.value);
+    newDate.setDate(newDate.getDate() + 1);
+    selectedDate.value = newDate;
+    fetchActivities();
+  }
+};
+
+const toggleDatePicker = () => {
+  showDatePicker.value = !showDatePicker.value;
+};
 
 const normalizeDateInput = (value: string) => {
   if (!value) {
-    return '';
+    return "";
   }
-  return value.includes('T') ? value : value.replace(' ', 'T');
+  return value.includes("T") ? value : value.replace(" ", "T");
 };
 
 const safeDate = (value: string) => {
@@ -49,8 +100,8 @@ const safeDate = (value: string) => {
 };
 
 const fallbackInitial = (value: string | undefined | null) => {
-  const initial = value?.trim().charAt(0) ?? '';
-  return initial ? initial.toUpperCase() : '·';
+  const initial = value?.trim().charAt(0) ?? "";
+  return initial ? initial.toUpperCase() : "·";
 };
 
 const formatDuration = (minutes: number) => {
@@ -69,9 +120,9 @@ const formatDuration = (minutes: number) => {
 
 const formatTimeLabel = (date: Date | null) => {
   if (!date) {
-    return '—';
+    return "—";
   }
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
 const buildMeta = (activity: ActivityItem): EventMeta => {
@@ -105,7 +156,9 @@ const getDayBounds = (date: Date) => {
 };
 
 const clampEventToDay = (meta: EventMeta, dayStart: Date, dayEnd: Date) => {
-  const start = new Date(Math.max(meta.startDate.getTime(), dayStart.getTime()));
+  const start = new Date(
+    Math.max(meta.startDate.getTime(), dayStart.getTime())
+  );
   const end = new Date(Math.min(meta.endDate.getTime(), dayEnd.getTime()));
   if (end.getTime() <= start.getTime()) {
     return null;
@@ -117,8 +170,10 @@ const fetchActivities = async () => {
   loading.value = true;
   errorMessage.value = null;
   try {
-    const date_string = selectedDate.value.toISOString().split('T')[0];
-    const data = await invoke<ActivityItem[]>('get_days_activities', { dateInput: date_string });
+    const date_string = selectedDate.value.toISOString().split("T")[0];
+    const data = await invoke<ActivityItem[]>("get_days_activities", {
+      dateInput: date_string,
+    });
     const { start: dayStart, end: dayEnd } = getDayBounds(selectedDate.value);
 
     const mapped: CalendarEvent[] = [];
@@ -128,13 +183,14 @@ const fetchActivities = async () => {
       if (!span) {
         return;
       }
-      const nameLayout = meta.application_name + ' ' + meta.application_window_title;
+      const nameLayout =
+        meta.application_name + " " + meta.application_window_title;
       mapped.push({
         name: nameLayout,
         category: meta.application_window_title,
         start: span.start,
         end: span.end,
-        color: activity.related_issue_id ? '#ED6A5A' : '#7DA59E',
+        color: activity.related_issue_id ? "#ED6A5A" : "#7DA59E",
         timed: true,
         allDay: false,
         data: meta,
@@ -143,8 +199,8 @@ const fetchActivities = async () => {
 
     events.value = mapped;
   } catch (error) {
-    console.error('Failed to fetch activities', error);
-    errorMessage.value = 'Unable to load activity data.';
+    console.error("Failed to fetch activities", error);
+    errorMessage.value = "Unable to load activity data.";
   } finally {
     loading.value = false;
   }
@@ -152,11 +208,14 @@ const fetchActivities = async () => {
 
 const calendarTitle = computed(() => {
   return selectedDate.value.toLocaleDateString(undefined, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    weekday: "long",
+    year: "numeric",
+    month: "long",
   });
+});
+
+const dayNumber = computed(() => {
+  return selectedDate.value.getDate();
 });
 
 const formatTooltip = (interval: CalendarEventInterval) => {
@@ -176,7 +235,7 @@ const formatTooltip = (interval: CalendarEventInterval) => {
     lines.push(`Ticket: ${meta.related_issue_id}`);
   }
 
-  return lines.filter(Boolean).join('\n');
+  return lines.filter(Boolean).join("\n");
 };
 
 const refresh = () => fetchActivities();
@@ -192,23 +251,81 @@ onMounted(async () => {
     <v-main class="pa-6">
       <v-container max-width="1100">
         <v-row class="mb-6">
-          <v-col cols="12" class="d-flex align-center justify-space-between gap-4 flex-wrap">
-            <div>
-              <h1 class="text-h4 font-weight-bold mb-2">Today's Activity Overview</h1>
-              <p class="text-body-2 opacity-80 mb-0">{{ calendarTitle }}</p>
+          <v-col
+            cols="12"
+            class="d-flex align-center justify-space-between gap-4 flex-wrap"
+          >
+            <div class="d-flex align-center gap-4">
+              <div>
+                <h1 class="text-h4 font-weight-bold mb-2">Activity Overview</h1>
+              </div>
             </div>
-            <v-btn color="primary" variant="flat" prepend-icon="mdi-refresh" @click="refresh">
+            <v-btn
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-refresh"
+              @click="refresh"
+            >
               Refresh
             </v-btn>
+          </v-col>
+        </v-row>
+        <v-row class="mb-6">
+          <v-col cols="12" class="d-flex align-center justify-center">
+            <div class="d-flex align-center gap-2">
+              <v-btn
+                icon="mdi-chevron-left"
+                variant="text"
+                size="small"
+                @click="goToPreviousDay"
+                aria-label="Previous day"
+              ></v-btn>
+              <v-menu v-model="showDatePicker" :close-on-content-click="false">
+                <template #activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    variant="outlined"
+                    size="large"
+                    class="text-h5 font-weight-bold px-4"
+                    @click="toggleDatePicker"
+                  >
+                    {{ dayNumber }}
+                  </v-btn>
+                </template>
+                <v-date-picker
+                  v-model="datePickerValue"
+                  :max="maxDate.toISOString().split('T')[0]"
+                  hide-header
+                ></v-date-picker>
+              </v-menu>
+              <v-btn
+                icon="mdi-chevron-right"
+                variant="text"
+                size="small"
+                :disabled="!canGoForward"
+                @click="goToNextDay"
+                aria-label="Next day"
+              ></v-btn>
+            </div>
           </v-col>
         </v-row>
 
         <v-row>
           <v-col cols="12">
-            <v-alert v-if="errorMessage" type="error" class="mb-4" variant="tonal" border="start">
+            <v-alert
+              v-if="errorMessage"
+              type="error"
+              class="mb-4"
+              variant="tonal"
+              border="start"
+            >
               {{ errorMessage }}
             </v-alert>
-            <v-skeleton-loader v-if="loading" type="table" class="mt-4"></v-skeleton-loader>
+            <v-skeleton-loader
+              v-if="loading"
+              type="table"
+              class="mt-4"
+            ></v-skeleton-loader>
 
             <v-card v-else elevation="8" rounded="xl" class="overflow-hidden">
               <v-calendar
@@ -216,17 +333,35 @@ onMounted(async () => {
                 :model-value="selectedDate"
                 :events="events"
                 :interval-count="DAY_INTERVAL_COUNT"
-                :first-interval="0"
+                :first-interval="FIRST_HOUR * (60 / INTERVAL_MINUTES)"
                 :interval-minutes="INTERVAL_MINUTES"
                 :interval-height="INTERVAL_HEIGHT"
                 event-overlap-mode="column"
                 color="primary"
               >
-                <template #event-tooltip="{ event, interval }">
-                  <div class="py-2 px-3">
-                    <pre>{{event}}</pre>
-                    <strong>{{ event.title }}</strong>
-                    <div>{{ formatTooltip(interval) }}</div>
+                <template #day-header> </template>
+                <template #day-label-header> </template>
+                <template #event="{ event }">
+                  <div class="event-entry">
+                    <v-row class="justify-space-between">
+                      <v-col class="event-avatar">
+                        <v-avatar>
+                          {{ event.data.application_name[0].toUpperCase() }}
+                        </v-avatar>
+                        {{ event.data.application_name }}
+                      </v-col>
+                      <v-col class="event-detail-info"> {{ event.data.application_window_title }}</v-col>
+                      <v-col class="event-duration">
+                        {{ event.data.startLabel }} - {{ event.data.endLabel }}
+                      </v-col>
+                      
+                    </v-row>
+                    <v-row class="justify-end align-items-end">
+                      <v-col>
+                        <v-chip color="primary" variant="flat" v-if="event.data.related_issue_id"> {{ event.data.related_issue_id }} </v-chip>
+                        <v-chip v-else>Smart assign</v-chip>
+                      </v-col>
+                    </v-row>
                   </div>
                 </template>
               </v-calendar>
@@ -237,3 +372,29 @@ onMounted(async () => {
     </v-main>
   </v-app>
 </template>
+<style lang="scss" scoped>
+.event-entry {
+  max-height: 100%;
+  padding: 1px 3px;
+  .v-avatar {
+    border: 2px solid red;
+    height: 20px;
+    width: 20px;
+  }
+  .event-detail-info {
+    max-width: 80%;
+    flex-grow: 1;
+    flex-shrink: 1;
+    line-break:anywhere;
+    height: 3rem;
+    overflow: hidden;
+  }
+  .event-duration {
+    flex-shrink: 1;
+    flex-grow: 0;
+  }
+  .event-avatar {
+    flex-grow: 0;
+  }
+}
+</style>
