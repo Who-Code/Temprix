@@ -19,39 +19,33 @@ interface EventMeta extends ActivityItem {
   avatarInitial: string;
   startLabel: string;
   endLabel: string;
+  startDate: Date;
+  endDate: Date;
 }
 
 const INTERVAL_MINUTES = 15;
 const INTERVAL_HEIGHT = 60;
-const PADDING_MINUTES = 60;
-const DAY_MINUTES = 24 * 60;
-const DEFAULT_INTERVAL_COUNT = DAY_MINUTES / INTERVAL_MINUTES;
+const DAY_INTERVAL_COUNT = (24 * 60) / INTERVAL_MINUTES;
 
 const events = ref<CalendarEvent[]>([]);
 const loading = ref(true);
 const selectedDate = ref(new Date());
 const errorMessage = ref<string | null>(null);
 
+const normalizeDateInput = (value: string) => {
+  if (!value) {
+    return '';
+  }
+  return value.includes('T') ? value : value.replace(' ', 'T');
+};
+
 const safeDate = (value: string) => {
-  const parsed = new Date(value);
+  const normalized = normalizeDateInput(value);
+  if (!normalized) {
+    return null;
+  }
+  const parsed = new Date(normalized);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const toMillis = (value: unknown) => {
-  if (value instanceof Date) {
-    const time = value.getTime();
-    return Number.isNaN(time) ? null : time;
-  }
-  const date = new Date(value as string | number);
-  const time = date.getTime();
-  return Number.isNaN(time) ? null : time;
-};
-
-const clampMinutes = (minutes: number) => {
-  if (!Number.isFinite(minutes)) {
-    return 0;
-  }
-  return Math.min(Math.max(minutes, 0), DAY_MINUTES);
 };
 
 const fallbackInitial = (value: string | undefined | null) => {
@@ -95,83 +89,58 @@ const buildMeta = (activity: ActivityItem): EventMeta => {
     avatarInitial: fallbackInitial(activity.application_name),
     startLabel: formatTimeLabel(start ?? new Date(startMs)),
     endLabel: formatTimeLabel(end ?? new Date(endMs)),
+    startDate: start ?? new Date(startMs),
+    endDate: end ?? new Date(endMs),
   };
 };
 
 const resolveMeta = (event: CalendarEvent) => event.data as EventMeta;
 
-const eventBounds = computed(() => {
-  let earliest = Number.POSITIVE_INFINITY;
-  let latest = Number.NEGATIVE_INFINITY;
+const getDayBounds = (date: Date) => {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start, end };
+};
 
-  events.value.forEach((event) => {
-    const start = toMillis(event.start);
-    if (start !== null && start < earliest) {
-      earliest = start;
-    }
-    const end = toMillis(event.end ?? event.start);
-    if (end !== null && end > latest) {
-      latest = end;
-    }
-  });
-
-  if (!Number.isFinite(earliest) || !Number.isFinite(latest)) {
+const clampEventToDay = (meta: EventMeta, dayStart: Date, dayEnd: Date) => {
+  const start = new Date(Math.max(meta.startDate.getTime(), dayStart.getTime()));
+  const end = new Date(Math.min(meta.endDate.getTime(), dayEnd.getTime()));
+  if (end.getTime() <= start.getTime()) {
     return null;
   }
-
-  return { earliest, latest } as const;
-});
-
-const firstVisibleInterval = computed(() => {
-  if (!eventBounds.value) {
-    return 0;
-  }
-
-  const { earliest } = eventBounds.value;
-  const padded = earliest - PADDING_MINUTES * 60_000;
-  const reference = new Date(earliest);
-  reference.setHours(0, 0, 0, 0);
-  const startMinutes = clampMinutes(Math.round((padded - reference.getTime()) / 60_000));
-  return Math.floor(startMinutes / INTERVAL_MINUTES);
-});
-
-const visibleIntervalCount = computed(() => {
-  if (!eventBounds.value) {
-    return DEFAULT_INTERVAL_COUNT;
-  }
-
-  const reference = new Date(eventBounds.value.earliest);
-  reference.setHours(0, 0, 0, 0);
-  const dayStartMs = reference.getTime();
-
-  const intervalStartMinutes = firstVisibleInterval.value * INTERVAL_MINUTES;
-  const paddedEnd = eventBounds.value.latest + PADDING_MINUTES * 60_000;
-  const endMinutes = clampMinutes(Math.round((paddedEnd - dayStartMs) / 60_000));
-  const spanMinutes = Math.max(INTERVAL_MINUTES, endMinutes - intervalStartMinutes);
-
-  const intervals = Math.ceil(spanMinutes / INTERVAL_MINUTES);
-  return Math.min(intervals, DEFAULT_INTERVAL_COUNT);
-});
+  return { start, end } as const;
+};
 
 const fetchActivities = async () => {
   loading.value = true;
   errorMessage.value = null;
   try {
     const date_string = selectedDate.value.toISOString().split('T')[0];
-    const data = await invoke<ActivityItem[]>('get_days_activities', {dateInput: date_string});
-    console.dir(data);
-    events.value = data.map((activity) => {
+    const data = await invoke<ActivityItem[]>('get_days_activities', { dateInput: date_string });
+    const { start: dayStart, end: dayEnd } = getDayBounds(selectedDate.value);
+
+    const mapped: CalendarEvent[] = [];
+    data.forEach((activity) => {
       const meta = buildMeta(activity);
-      return {
+      const span = clampEventToDay(meta, dayStart, dayEnd);
+      if (!span) {
+        return;
+      }
+      mapped.push({
         title: meta.application_name || 'Unknown Activity',
         details: meta.application_window_title,
-        start: activity.from,
-        end: activity.to,
+        start: span.start,
+        end: span.end,
         color: activity.related_issue_id ? '#ED6A5A' : '#7DA59E',
+        timed: true,
         allDay: false,
         data: meta,
-      } satisfies CalendarEvent;
+      } satisfies CalendarEvent);
     });
+
+    events.value = mapped;
   } catch (error) {
     console.error('Failed to fetch activities', error);
     errorMessage.value = 'Unable to load activity data.';
@@ -241,37 +210,16 @@ onMounted(async () => {
             <v-skeleton-loader v-if="loading" type="table" class="mt-4"></v-skeleton-loader>
 
             <v-card v-else elevation="8" rounded="xl" class="overflow-hidden">
-              {{ events }}
               <v-calendar
                 type="day"
                 :model-value="selectedDate"
                 :events="events"
-                :interval-count="visibleIntervalCount"
-                :first-interval="firstVisibleInterval"
+                :interval-count="DAY_INTERVAL_COUNT"
+                :first-interval="0"
                 :interval-minutes="INTERVAL_MINUTES"
                 :interval-height="INTERVAL_HEIGHT"
                 color="primary"
-                :event-text-props="{ class: 'text-body-2 font-weight-medium' }"
-                :event-more="false"
-                :event-overlap-mode="'column'"
-                :event-overlap-threshold="30"
               >
-                <template #event="{ event }">
-                  <div class="entry">
-                    <div class="entry__avatar">
-                      <span>{{ resolveMeta(event).avatarInitial }}</span>
-                    </div>
-                    <div class="entry__details">
-                      <div class="entry__title" :title="resolveMeta(event).application_window_title">
-                        {{ resolveMeta(event).application_window_title || resolveMeta(event).application_name }}
-                      </div>
-                      <div class="entry__meta">
-                        <span>{{ resolveMeta(event).durationLabel }}</span>
-                        <span v-if="resolveMeta(event).related_issue_id">· Ticket {{ resolveMeta(event).related_issue_id }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </template>
                 <template #event-tooltip="{ event, interval }">
                   <div class="py-2 px-3">
                     <strong>{{ event.title }}</strong>
