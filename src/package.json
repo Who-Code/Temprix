@@ -1,13 +1,31 @@
 {
   "name": "temprix",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "scripts": {
-    "tauri": "tauri"
+    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "dependencies": {
+    "@mdi/font": "^7.4.47",
+    "@tauri-apps/api": "^2.0.1",
+    "vue": "^3.5.11",
+    "vuetify": "^3.6.4"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.0.0"
+    "@tauri-apps/cli": "^2.0.0",
+    "@types/node": "^20.16.5",
+    "@vitejs/plugin-vue": "^5.1.2",
+    "sass": "^1.77.8",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.7",
+    "vite-plugin-vuetify": "^2.0.5",
+    "vue-tsc": "^2.0.29"
   },
   "volta": {
     "node": "20.19.0"

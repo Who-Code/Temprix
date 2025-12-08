@@ -11,6 +11,7 @@ pub struct ActivityItem {
     pub from: String,
     pub to: String,
     pub application_name: String,
+    pub application_window_title: String,
     pub related_issue_id: Option<String>,
     pub category: String,
     pub issue_identified_by: String,
@@ -96,6 +97,23 @@ impl ActivityTracker {
 
     pub fn get_patterns(&self) -> Vec<String> {
         self.config.lock().unwrap().ticket_patterns.clone()
+    }
+
+    pub fn get_days_activities(&self, date_str: String) -> Vec<ActivityItem> {
+        let storage_dir = {
+            let config = self.config.lock().unwrap();
+            config.storage_dir.clone()
+        };
+
+        // let date_str = Local::now().format("%Y-%m-%d").to_string();
+        let file_name = format!("activity_{}.json", date_str);
+        let file_path = storage_dir.join(file_name);
+
+        if let Ok(content) = fs::read_to_string(file_path) {
+            serde_json::from_str::<Vec<ActivityItem>>(&content).unwrap_or_default()
+        } else {
+            Vec::new()
+        }
     }
 
     pub fn check_activity(&self) {
@@ -188,6 +206,7 @@ impl ActivityTracker {
                 from: activity.start_time.format("%Y-%m-%d %H:%M:%S").to_string(),
                 to: end_time.format("%Y-%m-%d %H:%M:%S").to_string(),
                 application_name: activity.app_name,
+                application_window_title: activity.title,
                 related_issue_id: activity.issue_id.clone(),
                 category: if activity.issue_id.is_some() { "issue_related_activity".to_string() } else { "no_ticket_found".to_string() },
                 issue_identified_by: if activity.issue_id.is_some() { activity.identified_by } else { "none".to_string() },
@@ -216,6 +235,7 @@ impl ActivityTracker {
         
         true
     }
+
     
     fn append_to_file(&self, item: ActivityItem) {
         let config = self.config.lock().unwrap();
@@ -235,31 +255,21 @@ impl ActivityTracker {
 
         // Check if we can merge with the last activity
         if let Some(last_activity) = activities.last_mut() {
-            // Try to parse "from" and "to" times of the last activity
-            let fmt = "%Y-%m-%d %H:%M:%S";
-            if let Ok(last_to) = NaiveDateTime::parse_from_str(&last_activity.to, fmt) {
-                if let Ok(new_from) = NaiveDateTime::parse_from_str(&item.from, fmt) {
-                    // Calculate gap duration
-                    let gap = new_from - last_to;
-                    
-                    // If gap is less than or equal to 3 minutes AND it's the same activity type
-                    if gap.num_minutes() <= 3 
-                        && last_activity.application_name == item.application_name 
-                        && last_activity.related_issue_id == item.related_issue_id 
-                    {
-                        // Merge: Update the "to" time of the last activity
-                        last_activity.to = item.to;
-                        
-                        // Save updated list
-                        if let Ok(json) = serde_json::to_string_pretty(&activities) {
-                            let _ = fs::write(file_path, json);
-                        }
-                        return;
-                    }
+            if last_activity.application_name == item.application_name
+                && last_activity.related_issue_id == item.related_issue_id
+            {
+                last_activity.to = item.to.clone();
+                last_activity.application_window_title = item.application_window_title.clone();
+                last_activity.issue_identified_by = item.issue_identified_by.clone();
+                last_activity.category = item.category.clone();
+
+                if let Ok(json) = serde_json::to_string_pretty(&activities) {
+                    let _ = fs::write(file_path, json);
                 }
+                return;
             }
         }
-        
+
         // If no merge happened, append new item
         activities.push(item);
         
