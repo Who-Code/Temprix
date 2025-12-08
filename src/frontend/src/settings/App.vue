@@ -7,6 +7,11 @@ interface PatternEntry {
   value: string;
 }
 
+const patternTemplates = {
+  'Redmine': '#{0,1}([1-9]{1,1}[0-9]{5,5})',
+  'JIRA': '([A-Z][A-Z_0-9]+-[0-9]+)(?=.*::)'
+};
+
 const patterns = ref<PatternEntry[]>([]);
 const saving = ref(false);
 const loading = ref(true);
@@ -34,6 +39,10 @@ const loadPatterns = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const addPatternFromTemplate = (templateRegex: string) => {
+  patterns.value.push(createPatternEntry(templateRegex));
 };
 
 const addPattern = () => {
@@ -69,18 +78,6 @@ onMounted(loadPatterns);
   <v-app>
     <v-main class="pa-6">
       <v-container max-width="840">
-        <v-row class="mb-6" align="center" justify="center">
-          <v-col cols="12" md="8" class="text-center">
-            <v-avatar size="80" class="mb-4 elevation-4">
-              <v-img src="@assets/logo.png" alt="Temprix" cover />
-            </v-avatar>
-            <h1 class="text-h4 font-weight-bold mb-2">Temprix Settings</h1>
-            <p class="text-body-2 opacity-80">
-              Configure the patterns we use to identify ticket IDs directly from your window titles.
-            </p>
-          </v-col>
-        </v-row>
-
         <v-card elevation="8" rounded="xl">
           <v-card-title class="d-flex align-center justify-space-between flex-wrap gap-4">
             <div class="d-flex align-center gap-3">
@@ -98,6 +95,19 @@ onMounted(loadPatterns);
               We use standard regular expressions. Capture group 1 will be stored as the ticket identifier.
               For example, <code>#(\d+)</code> captures IDs like <em>#1234</em>.
             </p>
+
+            <v-divider></v-divider>
+
+            <div class="mb-4 mtß4">
+              <h3>Issue Tracking Templates</h3>
+              <p>Use the presets for ready to use Regex for common issue tracking systems</p>
+              <v-btn @click="addPatternFromTemplate(template)" v-for="(template, templateKey) of patternTemplates" :key="templateKey+template">
+                {{ templateKey }}
+              </v-btn>
+            </div>
+
+            <v-divider></v-divider>
+            
 
             <v-skeleton-loader
               v-if="loading"
