@@ -342,8 +342,8 @@ onMounted(async () => {
                 <template #day-header> </template>
                 <template #day-label-header> </template>
                 <template #event="{ event }">
-                  <div class="event-entry">
-                    <v-row class="justify-space-between">
+                  <div class="event-entry justify-start">
+                    <v-row class="justify-space-between flex-shrink-1">
                       <v-col class="event-avatar">
                         <v-avatar>
                           {{ event.data.application_name[0].toUpperCase() }}
@@ -351,15 +351,12 @@ onMounted(async () => {
                         {{ event.data.application_name }}
                       </v-col>
                       <v-col class="event-detail-info"> {{ event.data.application_window_title }}</v-col>
+                      <v-col class="event-ticket">
+                        <v-chip size="xs" color="primary" variant="flat" v-if="event.data.related_issue_id"> {{ event.data.related_issue_id }} </v-chip>
+                        <v-chip size="xs" v-else>Smart assign</v-chip>
+                      </v-col>
                       <v-col class="event-duration">
                         {{ event.data.startLabel }} - {{ event.data.endLabel }}
-                      </v-col>
-                      
-                    </v-row>
-                    <v-row class="justify-end align-items-end">
-                      <v-col>
-                        <v-chip color="primary" variant="flat" v-if="event.data.related_issue_id"> {{ event.data.related_issue_id }} </v-chip>
-                        <v-chip v-else>Smart assign</v-chip>
                       </v-col>
                     </v-row>
                   </div>
@@ -372,12 +369,28 @@ onMounted(async () => {
     </v-main>
   </v-app>
 </template>
-<style lang="scss" scoped>
+<style lang="scss">
+.v-event-timed {
+  min-height: 32px;
+  transition: all 1s ease;
+  transform: scale(1);
+  overflow: hidden;
+  &:hover {
+    z-index: 999;
+    transform: scale(1.02);
+  }
+}
 .event-entry {
   max-height: 100%;
-  padding: 1px 3px;
+  padding: 4px;
+  gap: 5px;
+  .event-ticket {
+    flex-grow: 0;
+    .v-chip {
+      padding: 0 6px;
+    }
+  }
   .v-avatar {
-    border: 2px solid red;
     height: 20px;
     width: 20px;
   }
